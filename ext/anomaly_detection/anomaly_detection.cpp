@@ -40,12 +40,14 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
     auto num_obs = data.size();
 
     // Check to make sure we have at least two periods worth of data for anomaly context
-    assert(num_obs >= num_obs_per_period * 2);
+    if (num_obs < num_obs_per_period * 2) {
+        throw std::invalid_argument("series must contain at least 2 periods");
+    }
 
     // Handle NANs
     auto nan = std::count_if(data.begin(), data.end(), [](const auto& value) { return std::isnan(value); });
     if (nan > 0) {
-        throw std::invalid_argument("Data contains NANs");
+        throw std::invalid_argument("series contains NANs");
     }
 
     // Decompose data. This returns a univarite remainder which will be used for anomaly detection. Optionally, we might NOT decompose.
@@ -61,8 +63,6 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
     }
 
     auto max_outliers = (size_t) num_obs * k;
-    assert(max_outliers > 0);
-
     auto n = data2.size();
 
     std::vector<size_t> r_idx;

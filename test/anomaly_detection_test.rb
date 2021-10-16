@@ -29,7 +29,7 @@ class AnomalyDetectionTest < Minitest::Test
     error = assert_raises(ArgumentError) do
       AnomalyDetection.detect(series, period: 7, max_anoms: 0.2)
     end
-    assert_equal "Data contains NANs", error.message
+    assert_equal "series contains NANs", error.message
   end
 
   def test_empty_data
@@ -44,6 +44,10 @@ class AnomalyDetectionTest < Minitest::Test
       AnomalyDetection.detect(series, period: 7, direction: "bad")
     end
     assert_equal "Bad direction", error.message
+  end
+
+  def test_max_anoms_zero
+    assert_empty AnomalyDetection.detect(series, period: 7, max_anoms: 0)
   end
 
   def series
