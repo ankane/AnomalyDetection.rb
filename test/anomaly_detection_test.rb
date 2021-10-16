@@ -43,7 +43,7 @@ class AnomalyDetectionTest < Minitest::Test
     error = assert_raises(ArgumentError) do
       AnomalyDetection.detect(series, period: 7, direction: "bad")
     end
-    assert_equal "Bad direction", error.message
+    assert_equal "direction must be pos, neg, or both", error.message
   end
 
   def test_max_anoms_zero

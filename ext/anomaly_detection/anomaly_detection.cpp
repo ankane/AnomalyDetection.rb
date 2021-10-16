@@ -149,7 +149,7 @@ std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, 
         one_tail = false;
         upper_tail = true; // not used
     } else {
-        throw std::invalid_argument("Bad direction");
+        throw std::invalid_argument("direction must be pos, neg, or both");
     }
 
     return detect_anoms(x, period, k, alpha, one_tail, upper_tail);
