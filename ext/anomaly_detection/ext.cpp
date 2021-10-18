@@ -1,6 +1,7 @@
-#include "anomaly_detection.hpp"
 #include <rice/rice.hpp>
 #include <rice/stl.hpp>
+
+#include "anomaly_detection.hpp"
 
 using anomaly_detection::Direction;
 
