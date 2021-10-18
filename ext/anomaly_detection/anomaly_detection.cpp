@@ -106,12 +106,11 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
 
         auto iter = std::max_element(ares.begin(), ares.end());
         auto r_idx_i = std::distance(ares.begin(), iter);
-        auto r_idx_i2 = indexes[r_idx_i];
 
         // Only need to take sigma of r for performance
         auto r = ares[r_idx_i] / data_sigma;
 
-        r_idx.push_back(r_idx_i2);
+        r_idx.push_back(indexes[r_idx_i]);
         data2.erase(data2.begin() + r_idx_i);
         indexes.erase(indexes.begin() + r_idx_i);
 
