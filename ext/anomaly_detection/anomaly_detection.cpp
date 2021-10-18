@@ -81,12 +81,12 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
 
     // Compute test statistic until r=max_outliers values have been removed from the sample
     for (auto i = 1; i <= max_outliers; i++) {
+        // Check for interrupts
+        rb_thread_check_ints();
+
         if (verbose) {
             std::cout << i << " / " << max_outliers << " completed" << std::endl;
         }
-
-        // Check for interrupts
-        rb_thread_check_ints();
 
         // TODO Improve performance between loop iterations
         auto ma = median(data2);
