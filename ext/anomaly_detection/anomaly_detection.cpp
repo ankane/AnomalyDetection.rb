@@ -1,3 +1,4 @@
+#include <iostream>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -39,7 +40,7 @@ float qt(double p, double df) {
     return t;
 }
 
-std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail) {
+std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose) {
     auto num_obs = data.size();
 
     // Check to make sure we have at least two periods worth of data for anomaly context
@@ -80,6 +81,10 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
 
     // Compute test statistic until r=max_outliers values have been removed from the sample
     for (auto i = 1; i <= max_outliers; i++) {
+        if (verbose) {
+            std::cout << i << " / " << max_outliers << " completed" << std::endl;
+        }
+
         // Check for interrupts
         rb_thread_check_ints();
 
@@ -143,11 +148,10 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
     return anomalies;
 }
 
-std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, Direction direction) {
+std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, Direction direction, bool verbose) {
     bool one_tail = direction != Direction::Both;
     bool upper_tail = direction == Direction::Positive;
-
-    return detect_anoms(x, period, k, alpha, one_tail, upper_tail);
+    return detect_anoms(x, period, k, alpha, one_tail, upper_tail, verbose);
 }
 
 }

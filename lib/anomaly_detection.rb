@@ -5,7 +5,7 @@ require "anomaly_detection/ext"
 require "anomaly_detection/version"
 
 module AnomalyDetection
-  def self.detect(series, period:, max_anoms: 0.1, alpha: 0.05, direction: "both")
+  def self.detect(series, period:, max_anoms: 0.1, alpha: 0.05, direction: "both", verbose: false)
     raise ArgumentError, "series must contain at least 2 periods" if series.size < period * 2
 
     if series.is_a?(Hash)
@@ -15,7 +15,7 @@ module AnomalyDetection
       x = series
     end
 
-    res = _detect(x, period, max_anoms, alpha, direction)
+    res = _detect(x, period, max_anoms, alpha, direction, verbose)
     res.map! { |i| sorted[i][0] } if series.is_a?(Hash)
     res
   end

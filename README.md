@@ -53,7 +53,8 @@ AnomalyDetection.detect(
   period: 7,            # number of observations in a single period
   alpha: 0.05,          # level of statistical significance
   max_anoms: 0.1,       # maximum number of anomalies as percent of data
-  direction: "both"     # pos, neg, or both
+  direction: "both",    # pos, neg, or both
+  verbose: false        # show progress
 )
 ```
 
