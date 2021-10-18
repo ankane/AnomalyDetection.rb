@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iterator>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -11,9 +12,7 @@
 
 namespace anomaly_detection {
 
-float median(const std::vector<float>& data) {
-    std::vector<float> sorted(data);
-    std::sort(sorted.begin(), sorted.end());
+float median(const std::vector<float>& sorted) {
     return (sorted[(sorted.size() - 1) / 2] + sorted[sorted.size() / 2]) / 2.0;
 }
 
@@ -23,6 +22,7 @@ float mad(const std::vector<float>& data, float med) {
     for (auto v : data) {
         res.push_back(fabs(v - med));
     }
+    std::sort(res.begin(), res.end());
     return 1.4826 * median(res);
 }
 
@@ -41,10 +41,10 @@ float qt(double p, double df) {
 }
 
 std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose) {
-    auto num_obs = data.size();
+    auto n = data.size();
 
     // Check to make sure we have at least two periods worth of data for anomaly context
-    if (num_obs < num_obs_per_period * 2) {
+    if (n < num_obs_per_period * 2) {
         throw std::invalid_argument("series must contain at least 2 periods");
     }
 
@@ -55,29 +55,26 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
     }
 
     // Decompose data. This returns a univarite remainder which will be used for anomaly detection. Optionally, we might NOT decompose.
-    auto seasonal_length = data.size() * 10 + 1;
+    auto seasonal_length = n * 10 + 1;
     auto data_decomp = stl::params().robust(true).seasonal_length(seasonal_length).fit(data, num_obs_per_period);
 
     auto seasonal = data_decomp.seasonal;
     auto med = median(data);
     std::vector<float> data2;
-    data2.reserve(data.size());
-    for (auto i = 0; i < data.size(); i++) {
+    data2.reserve(n);
+    for (auto i = 0; i < n; i++) {
         data2.push_back(data[i] - seasonal[i] - med);
     }
 
-    auto max_outliers = (size_t) num_obs * k;
-    auto n = data2.size();
-
     std::vector<size_t> r_idx;
-
-    std::vector<size_t> indexes;
-    indexes.reserve(data2.size());
-    for (auto i = 0; i < data2.size(); i++) {
-        indexes.push_back(i);
-    }
-
     auto num_anoms = 0;
+    auto max_outliers = (size_t) n * k;
+
+    // Sort data for fast median
+    std::vector<size_t> indexes(n);
+    std::iota(indexes.begin(), indexes.end(), 0);
+    std::stable_sort(indexes.begin(), indexes.end(), [&data2](size_t a, size_t b) { return data2[a] < data2[b]; });
+    std::sort(data2.begin(), data2.end());
 
     // Compute test statistic until r=max_outliers values have been removed from the sample
     for (auto i = 1; i <= max_outliers; i++) {
