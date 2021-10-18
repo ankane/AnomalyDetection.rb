@@ -70,6 +70,7 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
     auto max_outliers = (size_t) n * k;
 
     // Sort data for fast median
+    // Use stable sort for indexes for deterministic results
     std::vector<size_t> indexes(n);
     std::iota(indexes.begin(), indexes.end(), 0);
     std::stable_sort(indexes.begin(), indexes.end(), [&data2](size_t a, size_t b) { return data2[a] < data2[b]; });
