@@ -1,3 +1,4 @@
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <numeric>
