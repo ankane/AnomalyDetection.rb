@@ -24,7 +24,7 @@ void Init_ext() {
           throw std::invalid_argument("direction must be pos, neg, or both");
         }
 
-        auto res = anomaly_detection::anomalies(x, period, k, alpha, dir, verbose);
+        auto res = anomaly_detection::anomalies(x, period, k, alpha, dir, verbose, rb_thread_check_ints);
 
         auto a = Rice::Array();
         for (auto v : res) {
