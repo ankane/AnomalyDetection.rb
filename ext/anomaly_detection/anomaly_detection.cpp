@@ -6,6 +6,8 @@
 #include "cdflib.hpp"
 #include "stl.hpp"
 
+namespace anomaly_detection {
+
 float median(const std::vector<float>& data) {
     std::vector<float> sorted(data);
     std::sort(sorted.begin(), sorted.end());
@@ -153,4 +155,6 @@ std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, 
     }
 
     return detect_anoms(x, period, k, alpha, one_tail, upper_tail);
+}
+
 }
