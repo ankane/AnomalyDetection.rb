@@ -75,6 +75,8 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
         indexes.push_back(i);
     }
 
+    auto num_anoms = 0;
+
     // Compute test statistic until r=max_outliers values have been removed from the sample
     for (auto i = 1; i <= max_outliers; i++) {
         // TODO Improve performance between loop iterations
@@ -110,7 +112,7 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
         // Only need to take sigma of r for performance
         auto r = ares[r_idx_i] / data_sigma;
 
-        // TODO Swap to last position and delete
+        r_idx.push_back(r_idx_i2);
         data2.erase(data2.begin() + r_idx_i);
         indexes.erase(indexes.begin() + r_idx_i);
 
@@ -126,16 +128,16 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
         auto lam = t * (n - i) / sqrt(((n - i - 1) + powf(t, 2.0)) * (n - i + 1));
 
         if (r > lam) {
-            r_idx.push_back(r_idx_i2);
-        } else {
-            break;
+            num_anoms = i;
         }
     }
 
-    // Sort like R version
-    std::sort(r_idx.begin(), r_idx.end());
+    std::vector<size_t> anomalies(r_idx.begin(), r_idx.begin() + num_anoms);
 
-    return r_idx;
+    // Sort like R version
+    std::sort(anomalies.begin(), anomalies.end());
+
+    return anomalies;
 }
 
 std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, Direction direction) {
