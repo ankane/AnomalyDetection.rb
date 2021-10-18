@@ -139,18 +139,8 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
 }
 
 std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, Direction direction) {
-    bool one_tail;
-    bool upper_tail;
-    if (direction == Direction::Positive) {
-        one_tail = true;
-        upper_tail = true;
-    } else if (direction == Direction::Negative) {
-        one_tail = true;
-        upper_tail = false;
-    } else {
-        one_tail = false;
-        upper_tail = true; // not used
-    }
+    bool one_tail = direction == Direction::Positive || direction == Direction::Negative;
+    bool upper_tail = direction == Direction::Positive;
 
     return detect_anoms(x, period, k, alpha, one_tail, upper_tail);
 }
