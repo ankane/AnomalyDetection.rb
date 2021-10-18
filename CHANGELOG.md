@@ -1,4 +1,4 @@
-## 0.1.1 (unreleased)
+## 0.1.1 (2021-10-17)
 
 - Added `verbose` option
 - Improved interrupt handling
