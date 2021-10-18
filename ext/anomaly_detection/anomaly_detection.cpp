@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "anomaly_detection.hpp"
 #include "cdflib.hpp"
 #include "stl.hpp"
 
@@ -137,20 +138,18 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
     return r_idx;
 }
 
-std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, const std::string& direction) {
+std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, Direction direction) {
     bool one_tail;
     bool upper_tail;
-    if (direction == "pos") {
+    if (direction == Direction::Positive) {
         one_tail = true;
         upper_tail = true;
-    } else if (direction == "neg") {
+    } else if (direction == Direction::Negative) {
         one_tail = true;
         upper_tail = false;
-    } else if (direction == "both") {
+    } else {
         one_tail = false;
         upper_tail = true; // not used
-    } else {
-        throw std::invalid_argument("direction must be pos, neg, or both");
     }
 
     return detect_anoms(x, period, k, alpha, one_tail, upper_tail);
