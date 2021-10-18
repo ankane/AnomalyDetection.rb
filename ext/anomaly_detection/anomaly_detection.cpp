@@ -14,8 +14,7 @@ float median(const std::vector<float>& data) {
     return (sorted[(sorted.size() - 1) / 2] + sorted[sorted.size() / 2]) / 2.0;
 }
 
-float mad(const std::vector<float>& data) {
-    auto med = median(data);
+float mad(const std::vector<float>& data, float med) {
     std::vector<float> res;
     res.reserve(data.size());
     for (auto v : data) {
@@ -100,7 +99,7 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
         }
 
         // Protect against constant time series
-        auto data_sigma = mad(data2);
+        auto data_sigma = mad(data2, ma);
         if (data_sigma == 0.0) {
             break;
         }
