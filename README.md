@@ -58,7 +58,7 @@ AnomalyDetection.detect(
 )
 ```
 
-## Plotting [unreleased]
+## Plotting
 
 Add [Vega](https://github.com/ankane/vega) to your application’s Gemfile:
 
