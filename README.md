@@ -54,8 +54,23 @@ AnomalyDetection.detect(
   alpha: 0.05,          # level of statistical significance
   max_anoms: 0.1,       # maximum number of anomalies as percent of data
   direction: "both",    # pos, neg, or both
+  plot: false,          # plot the time series and anomalies
   verbose: false        # show progress
 )
+```
+
+## Plotting [unreleased]
+
+Add [Vega](https://github.com/ankane/vega) to your application’s Gemfile:
+
+```ruby
+gem 'vega'
+```
+
+And get the plot with:
+
+```ruby
+AnomalyDetection.detect(series, period: 7, plot: true)[:plot]
 ```
 
 ## Credits
