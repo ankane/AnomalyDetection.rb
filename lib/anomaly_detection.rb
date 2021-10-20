@@ -18,21 +18,11 @@ module AnomalyDetection
 
       res = _detect(x, period, max_anoms, alpha, direction, verbose)
       res.map! { |i| sorted[i][0] } if series.is_a?(Hash)
-
-      if plot
-        {
-          anomalies: res,
-          plot: generate_plot(series, res)
-        }
-      else
-        res
-      end
+      res
     end
 
-    private
-
     # TODO add tooltips
-    def generate_plot(series, anomalies)
+    def plot(series, anomalies)
       require "vega"
 
       data =
@@ -72,6 +62,8 @@ module AnomalyDetection
         ])
         .config(axis: {title: nil, labelFontSize: 12})
     end
+
+    private
 
     def iso8601(v)
       if v.is_a?(Date)

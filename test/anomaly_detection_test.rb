@@ -50,6 +50,18 @@ class AnomalyDetectionTest < Minitest::Test
     assert_empty AnomalyDetection.detect(series, period: 7, max_anoms: 0)
   end
 
+  def test_plot_hash
+    today = Date.today
+    series = self.series.map.with_index.to_h { |v, i| [today + i, v] }
+    anomalies = AnomalyDetection.detect(series, period: 7, max_anoms: 0.2)
+    assert_kind_of Vega::LiteChart, AnomalyDetection.plot(series, anomalies)
+  end
+
+  def test_plot_array
+    anomalies = AnomalyDetection.detect(series, period: 7, max_anoms: 0.2)
+    assert_kind_of Vega::LiteChart, AnomalyDetection.plot(series, anomalies)
+  end
+
   def series
     [
       5.0, 9.0, 2.0, 9.0, 0.0, 6.0, 3.0, 8.0, 5.0, 18.0,
