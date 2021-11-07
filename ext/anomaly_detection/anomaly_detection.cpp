@@ -1,6 +1,7 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <mutex>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -25,13 +26,20 @@ float mad(const std::vector<float>& data, float med) {
     return 1.4826 * median(res);
 }
 
+std::mutex mtx;
+
 float qt(double p, double df) {
     int which = 2;
     double q = 1 - p;
     double t;
     int status;
     double bound;
-    cdft(&which, &p, &q, &t, &df, &status, &bound);
+
+    // use mutex since cdft is not thread-safe
+    {
+        const std::lock_guard<std::mutex> lock(mtx);
+        cdft(&which, &p, &q, &t, &df, &status, &bound);
+    }
 
     if (status != 0) {
         throw std::invalid_argument("Bad status");
