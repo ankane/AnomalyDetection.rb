@@ -152,10 +152,10 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
     return anomalies;
 }
 
-std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, Direction direction, bool verbose, std::function<void()> interrupt) {
+std::vector<size_t> anomalies(const std::vector<float>& x, int period, float k, float alpha, Direction direction, bool verbose, std::function<void()> check_for_interrupts) {
     bool one_tail = direction != Direction::Both;
     bool upper_tail = direction == Direction::Positive;
-    return detect_anoms(x, period, k, alpha, one_tail, upper_tail, verbose, interrupt);
+    return detect_anoms(x, period, k, alpha, one_tail, upper_tail, verbose, check_for_interrupts);
 }
 
 }
