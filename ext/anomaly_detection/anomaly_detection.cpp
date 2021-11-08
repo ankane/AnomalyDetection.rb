@@ -47,7 +47,7 @@ float qt(double p, double df) {
     return t;
 }
 
-std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> interrupt) {
+std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> check_for_interrupts) {
     auto n = data.size();
 
     // Check to make sure we have at least two periods worth of data for anomaly context
@@ -86,8 +86,7 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
 
     // Compute test statistic until r=max_outliers values have been removed from the sample
     for (auto i = 1; i <= max_outliers; i++) {
-        // Check for interrupts
-        interrupt();
+        check_for_interrupts();
 
         if (verbose) {
             std::cout << i << " / " << max_outliers << " completed" << std::endl;
