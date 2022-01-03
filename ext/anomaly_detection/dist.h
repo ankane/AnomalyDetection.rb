@@ -6,6 +6,9 @@
 
 #pragma once
 
+// for Windows C++
+#define _USE_MATH_DEFINES
+
 #include <assert.h>
 #include <math.h>
 
