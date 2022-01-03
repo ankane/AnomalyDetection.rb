@@ -1,3 +1,7 @@
+## 0.1.3 (unreleased)
+
+- Switched to dist.h
+
 ## 0.1.2 (2021-10-20)
 
 - Added `plot` method

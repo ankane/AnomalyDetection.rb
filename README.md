@@ -74,7 +74,7 @@ AnomalyDetection.plot(series, anomalies)
 
 ## Credits
 
-This library was ported from the [AnomalyDetection](https://github.com/twitter/AnomalyDetection) R package and is available under the same license. It uses [cdflib](https://people.sc.fsu.edu/~jburkardt/cpp_src/cdflib/cdflib.html) for the quantile function.
+This library was ported from the [AnomalyDetection](https://github.com/twitter/AnomalyDetection) R package and is available under the same license. It uses [stl-cpp](https://github.com/ankane/stl-cpp) for seasonal-trend decomposition and [dist.h](https://github.com/ankane/dist.h) for the quantile function.
 
 ## References
 

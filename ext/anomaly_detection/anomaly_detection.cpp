@@ -1,13 +1,12 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
-#include <mutex>
 #include <numeric>
 #include <string>
 #include <vector>
 
 #include "anomaly_detection.hpp"
-#include "cdflib.hpp"
+#include "dist.h"
 #include "stl.hpp"
 
 namespace anomaly_detection {
@@ -24,27 +23,6 @@ float mad(const std::vector<float>& data, float med) {
     }
     std::sort(res.begin(), res.end());
     return 1.4826 * median(res);
-}
-
-std::mutex mtx;
-
-float qt(double p, double df) {
-    int which = 2;
-    double q = 1 - p;
-    double t;
-    int status;
-    double bound;
-
-    // use mutex since cdft is not thread-safe
-    {
-        const std::lock_guard<std::mutex> lock(mtx);
-        cdft(&which, &p, &q, &t, &df, &status, &bound);
-    }
-
-    if (status != 0) {
-        throw std::invalid_argument("Bad status");
-    }
-    return t;
 }
 
 std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> check_for_interrupts) {
@@ -136,7 +114,7 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
             p = 1.0 - alpha / (2.0 * (n - i + 1));
         }
 
-        auto t = qt(p, n - i - 1);
+        auto t = students_t_ppf(p, n - i - 1);
         auto lam = t * (n - i) / sqrt(((n - i - 1) + powf(t, 2.0)) * (n - i + 1));
 
         if (r > lam) {
