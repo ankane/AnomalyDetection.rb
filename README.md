@@ -11,7 +11,7 @@ Learn [how it works](https://blog.twitter.com/engineering/en_us/a/2015/introduci
 Add this line to your application’s Gemfile:
 
 ```ruby
-gem 'anomaly_detection'
+gem "anomaly_detection"
 ```
 
 ## Getting Started
@@ -63,7 +63,7 @@ AnomalyDetection.detect(
 Add [Vega](https://github.com/ankane/vega) to your application’s Gemfile:
 
 ```ruby
-gem 'vega'
+gem "vega"
 ```
 
 And use:
