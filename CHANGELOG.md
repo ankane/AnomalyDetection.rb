@@ -1,4 +1,4 @@
-## 0.1.3 (unreleased)
+## 0.1.3 (2022-01-03)
 
 - Switched to dist.h
 
