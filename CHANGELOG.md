@@ -1,3 +1,7 @@
+## 0.1.4 (unreleased)
+
+- Fixed initial median calculation
+
 ## 0.1.3 (2022-01-03)
 
 - Switched to dist.h

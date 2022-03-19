@@ -12,7 +12,7 @@ void Init_ext() {
   rb_mAnomalyDetection
     .define_singleton_function(
       "_detect",
-      [](std::vector<float> x, int period, float k, float alpha, const std::string& direction, bool verbose) {
+      [](std::vector<float> series, int period, float k, float alpha, const std::string& direction, bool verbose) {
         Direction dir;
         if (direction == "pos") {
           dir = Direction::Positive;
@@ -24,10 +24,16 @@ void Init_ext() {
           throw std::invalid_argument("direction must be pos, neg, or both");
         }
 
-        auto res = anomaly_detection::anomalies(x, period, k, alpha, dir, verbose, rb_thread_check_ints);
+        auto res = anomaly_detection::params()
+          .max_anoms(k)
+          .alpha(alpha)
+          .direction(dir)
+          .verbose(verbose)
+          .callback(rb_thread_check_ints)
+          .fit(series, period);
 
         auto a = Rice::Array();
-        for (auto v : res) {
+        for (auto v : res.anomalies) {
           a.push(v);
         }
         return a;
