@@ -1,4 +1,4 @@
-## 0.1.4 (unreleased)
+## 0.1.4 (2022-03-19)
 
 - Fixed initial median calculation
 
