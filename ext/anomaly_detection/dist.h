@@ -1,15 +1,25 @@
 /*!
- * dist.h v0.1.0
+ * dist.h v0.1.1
  * https://github.com/ankane/dist.h
  * Unlicense OR MIT License
  */
 
 #pragma once
 
-#define _USE_MATH_DEFINES
-
 #include <assert.h>
 #include <math.h>
+
+#ifdef M_E
+#define DIST_E M_E
+#else
+#define DIST_E 2.71828182845904523536
+#endif
+
+#ifdef M_PI
+#define DIST_PI M_PI
+#else
+#define DIST_PI 3.14159265358979323846
+#endif
 
 // Winitzki, S. (2008).
 // A handy approximation for the error function and its inverse.
@@ -21,7 +31,7 @@ double erf(double x) {
 
     double a = 0.14;
     double x2 = x * x;
-    return sign * sqrt(1.0 - exp(-x2 * (4.0 / M_PI + a * x2) / (1.0 + a * x2)));
+    return sign * sqrt(1.0 - exp(-x2 * (4.0 / DIST_PI + a * x2) / (1.0 + a * x2)));
 }
 
 // Winitzki, S. (2008).
@@ -34,7 +44,7 @@ double inverse_erf(double x) {
 
     double a = 0.147;
     double ln = log(1.0 - x * x);
-    double f1 = 2.0 / (M_PI * a);
+    double f1 = 2.0 / (DIST_PI * a);
     double f2 = ln / 2.0;
     double f3 = f1 + f2;
     double f4 = 1.0 / a * ln;
@@ -43,7 +53,7 @@ double inverse_erf(double x) {
 
 double normal_pdf(double x, double mean, double std_dev) {
     double var = std_dev * std_dev;
-    return (1.0 / (var * sqrt(2.0 * M_PI))) * pow(M_E, -0.5 * pow((x - mean) / var, 2));
+    return (1.0 / (var * sqrt(2.0 * DIST_PI))) * pow(DIST_E, -0.5 * pow((x - mean) / var, 2));
 }
 
 double normal_cdf(double x, double mean, double std_dev) {
@@ -59,7 +69,7 @@ double normal_ppf(double p, double mean, double std_dev) {
 double students_t_pdf(double x, unsigned int n) {
     assert(n >= 1);
 
-    return tgamma((n + 1.0) / 2.0) / (sqrt(n * M_PI) * tgamma(n / 2.0)) * pow(1.0 + x * x / n, -(n + 1.0) / 2.0);
+    return tgamma((n + 1.0) / 2.0) / (sqrt(n * DIST_PI) * tgamma(n / 2.0)) * pow(1.0 + x * x / n, -(n + 1.0) / 2.0);
 }
 
 // Hill, G. W. (1970).
@@ -104,7 +114,7 @@ double students_t_cdf(double x, unsigned int n) {
                 n -= 2;
             }
         }
-        a = n == 0 ? a / sqrt(b) : (atan(y) + a / b) * (2.0 / M_PI);
+        a = n == 0 ? a / sqrt(b) : (atan(y) + a / b) * (2.0 / DIST_PI);
         return start + sign * (z - a) / 2;
     }
 
@@ -127,7 +137,7 @@ double students_t_cdf(double x, unsigned int n) {
         a = (n - 1) / (b * n) * a + y;
         n -= 2;
     }
-    a = n == 0 ? a / sqrt(b) : (atan(y) + a / b) * (2.0 / M_PI);
+    a = n == 0 ? a / sqrt(b) : (atan(y) + a / b) * (2.0 / DIST_PI);
     return start + sign * (z - a) / 2;
 }
 
@@ -149,7 +159,7 @@ double students_t_ppf(double p, unsigned int n) {
         return sign * sqrt(2.0 / (p * (2.0 - p)) - 2.0);
     }
 
-    double half_pi = M_PI / 2.0;
+    double half_pi = DIST_PI / 2.0;
 
     if (n == 1) {
         p = p * half_pi;
