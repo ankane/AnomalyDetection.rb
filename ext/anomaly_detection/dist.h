@@ -1,5 +1,5 @@
 /*!
- * dist.h v0.1.1
+ * dist.h v0.2.0
  * https://github.com/ankane/dist.h
  * Unlicense OR MIT License
  */
@@ -25,19 +25,6 @@
 // A handy approximation for the error function and its inverse.
 // https://drive.google.com/file/d/0B2Mt7luZYBrwZlctV3A3eF82VGM/view?resourcekey=0-UQpPhwZgzP0sF4LHBDlLtg
 // from https://sites.google.com/site/winitzki
-double erf(double x) {
-    double sign = x < 0 ? -1.0 : 1.0;
-    x = x < 0 ? -x : x;
-
-    double a = 0.14;
-    double x2 = x * x;
-    return sign * sqrt(1.0 - exp(-x2 * (4.0 / DIST_PI + a * x2) / (1.0 + a * x2)));
-}
-
-// Winitzki, S. (2008).
-// A handy approximation for the error function and its inverse.
-// https://drive.google.com/file/d/0B2Mt7luZYBrwZlctV3A3eF82VGM/view?resourcekey=0-UQpPhwZgzP0sF4LHBDlLtg
-// from https://sites.google.com/site/winitzki
 double inverse_erf(double x) {
     double sign = x < 0 ? -1.0 : 1.0;
     x = x < 0 ? -x : x;
@@ -52,21 +39,20 @@ double inverse_erf(double x) {
 }
 
 double normal_pdf(double x, double mean, double std_dev) {
-    double var = std_dev * std_dev;
-    return (1.0 / (var * sqrt(2.0 * DIST_PI))) * pow(DIST_E, -0.5 * pow((x - mean) / var, 2));
+    return (1.0 / (std_dev * sqrt(2.0 * DIST_PI))) * pow(DIST_E, -0.5 * pow((x - mean) / std_dev, 2));
 }
 
 double normal_cdf(double x, double mean, double std_dev) {
-    return 0.5 * (1.0 + erf((x - mean) / (std_dev * std_dev * sqrt(2))));
+    return 0.5 * (1.0 + erf((x - mean) / (std_dev * sqrt(2))));
 }
 
 double normal_ppf(double p, double mean, double std_dev) {
     assert(p >= 0 && p <= 1);
 
-    return mean + (std_dev * std_dev) * sqrt(2) * inverse_erf(2.0 * p - 1.0);
+    return mean + std_dev * sqrt(2) * inverse_erf(2.0 * p - 1.0);
 }
 
-double students_t_pdf(double x, unsigned int n) {
+double students_t_pdf(double x, double n) {
     assert(n >= 1);
 
     return tgamma((n + 1.0) / 2.0) / (sqrt(n * DIST_PI) * tgamma(n / 2.0)) * pow(1.0 + x * x / n, -(n + 1.0) / 2.0);
@@ -75,7 +61,7 @@ double students_t_pdf(double x, unsigned int n) {
 // Hill, G. W. (1970).
 // Algorithm 395: Student's t-distribution.
 // Communications of the ACM, 13(10), 617-619.
-double students_t_cdf(double x, unsigned int n) {
+double students_t_cdf(double x, double n) {
     assert(n >= 1);
 
     double start = x < 0 ? 0 : 1;
@@ -86,7 +72,7 @@ double students_t_cdf(double x, unsigned int n) {
     double y = t / n;
     double b = 1.0 + y;
 
-    if ((n >= 20 && t < n) || n > 200) {
+    if (n > floor(n) || (n >= 20 && t < n) || n > 200) {
         // asymptotic series for large or noninteger n
         if (y > 10e-6) {
             y = log(b);
@@ -97,6 +83,10 @@ double students_t_cdf(double x, unsigned int n) {
         y = (((((-0.4 * y - 3.3) * y - 24.0) * y - 85.5) / (0.8 * y * y + 100.0 + b) + y + 3.0) / b + 1.0) * sqrt(y);
         return start + sign * normal_cdf(-y, 0.0, 1.0);
     }
+
+    // make n int
+    // n is int between 1 and 200 if made it here
+    n = (int) n;
 
     if (n < 20 && t < 4.0) {
         // nested summation of cosine series
@@ -144,7 +134,7 @@ double students_t_cdf(double x, unsigned int n) {
 // Hill, G. W. (1970).
 // Algorithm 396: Student's t-quantiles.
 // Communications of the ACM, 13(10), 619-620.
-double students_t_ppf(double p, unsigned int n) {
+double students_t_ppf(double p, double n) {
     assert(p >= 0 && p <= 1);
     assert(n >= 1);
 
