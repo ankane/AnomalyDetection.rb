@@ -7,4 +7,5 @@ jobs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.7
+    - run: g++ --version
     - run: gem install anomaly_detection
