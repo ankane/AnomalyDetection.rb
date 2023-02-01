@@ -15,6 +15,11 @@ class AnomalyDetectionTest < Minitest::Test
     assert_equal [1], AnomalyDetection.detect(series, period: 1, max_anoms: 0.2)
   end
 
+  def test_period_auto
+    series = time_series
+    assert_equal [9, 15, 26].map { |i| series.keys[0] + i }, AnomalyDetection.detect(series, period: :auto, max_anoms: 0.2)
+  end
+
   def test_direction_pos
     assert_equal [9, 26], AnomalyDetection.detect(series, period: 7, direction: "pos")
   end

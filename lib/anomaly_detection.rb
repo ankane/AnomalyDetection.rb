@@ -7,6 +7,8 @@ require_relative "anomaly_detection/version"
 module AnomalyDetection
   class << self
     def detect(series, period:, max_anoms: 0.1, alpha: 0.05, direction: "both", plot: false, verbose: false)
+      period = determine_period(series) if period == :auto
+
       raise ArgumentError, "series must contain at least 2 periods" if series.size < period * 2
 
       if series.is_a?(Hash)
@@ -70,6 +72,32 @@ module AnomalyDetection
         v.strftime("%Y-%m-%d")
       else
         v.strftime("%Y-%m-%dT%H:%M:%S.%L%z")
+      end
+    end
+
+    # determine period based on time keys
+    # in future, could use an approach that looks at values
+    # like https://stats.stackexchange.com/a/1214
+    def determine_period(series)
+      unless series.is_a?(Hash)
+        raise ArgumentError, "series must be a hash for :auto period"
+      end
+
+      times = series.keys.map(&:to_time)
+
+      day = times.all? { |t| t.hour == 0 && t.min == 0 && t.sec == 0 && t.nsec == 0 }
+
+      period =
+        if day
+          7
+        else
+          1
+        end
+
+      if series.size < period * 2
+        1
+      else
+        period
       end
     end
   end
