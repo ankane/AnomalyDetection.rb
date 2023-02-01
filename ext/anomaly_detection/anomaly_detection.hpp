@@ -1,5 +1,5 @@
 /*!
- * AnomalyDetection.cpp v0.1.0
+ * AnomalyDetection.cpp v0.1.3
  * https://github.com/ankane/AnomalyDetection.cpp
  * GPL-3.0-or-later License
  */
@@ -39,7 +39,7 @@ float mad(const std::vector<float>& data, float med) {
     return 1.4826 * median_sorted(res);
 }
 
-std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> callback) {
+std::vector<size_t> detect_anoms(const std::vector<float>& data, size_t num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> callback) {
     auto n = data.size();
 
     // Check to make sure we have at least two periods worth of data for anomaly context
@@ -53,15 +53,22 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, int num_obs_per
         throw std::invalid_argument("series contains NANs");
     }
 
-    // Decompose data. This returns a univarite remainder which will be used for anomaly detection. Optionally, we might NOT decompose.
-    auto data_decomp = stl::params().robust(true).seasonal_length(data.size() * 10 + 1).fit(data, num_obs_per_period);
-    auto seasonal = data_decomp.seasonal;
-
     std::vector<float> data2;
     data2.reserve(n);
     auto med = median(data);
-    for (auto i = 0; i < n; i++) {
-        data2.push_back(data[i] - seasonal[i] - med);
+
+    if (num_obs_per_period > 1) {
+        // Decompose data. This returns a univarite remainder which will be used for anomaly detection. Optionally, we might NOT decompose.
+        auto data_decomp = stl::params().robust(true).seasonal_length(data.size() * 10 + 1).fit(data, num_obs_per_period);
+        auto seasonal = data_decomp.seasonal;
+
+        for (size_t i = 0; i < n; i++) {
+            data2.push_back(data[i] - seasonal[i] - med);
+        }
+    } else {
+        for (size_t i = 0; i < n; i++) {
+            data2.push_back(data[i] - med);
+        }
     }
 
     auto num_anoms = 0;

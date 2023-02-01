@@ -1,3 +1,7 @@
+## 0.1.5 (unreleased)
+
+- Fixed result when `period` is less than 2
+
 ## 0.1.4 (2022-03-19)
 
 - Fixed initial median calculation
