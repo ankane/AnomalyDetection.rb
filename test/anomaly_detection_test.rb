@@ -13,6 +13,7 @@ class AnomalyDetectionTest < Minitest::Test
   def test_no_seasonality
     series = [1.0, 6.0, 2.0, 3.0, 3.0, 0.0]
     assert_equal [1], AnomalyDetection.detect(series, period: 1, max_anoms: 0.2)
+    assert_equal [1], AnomalyDetection.detect(series, period: nil, max_anoms: 0.2)
   end
 
   def test_period_auto

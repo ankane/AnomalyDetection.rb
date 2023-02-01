@@ -7,7 +7,11 @@ require_relative "anomaly_detection/version"
 module AnomalyDetection
   class << self
     def detect(series, period:, max_anoms: 0.1, alpha: 0.05, direction: "both", plot: false, verbose: false)
-      period = determine_period(series) if period == :auto
+      if period == :auto
+        period = determine_period(series)
+      elsif period.nil?
+        period = 1
+      end
 
       raise ArgumentError, "series must contain at least 2 periods" if series.size < period * 2
 
