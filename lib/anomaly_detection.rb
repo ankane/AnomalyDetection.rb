@@ -9,6 +9,7 @@ module AnomalyDetection
     def detect(series, period:, max_anoms: 0.1, alpha: 0.05, direction: "both", plot: false, verbose: false)
       if period == :auto
         period = determine_period(series)
+        puts "Set period to #{period}" if verbose
       elsif period.nil?
         period = 1
       end
@@ -21,6 +22,9 @@ module AnomalyDetection
       else
         x = series
       end
+
+      # std::endl flushes C++ output, so flush Ruby output
+      $stdout.flush if verbose
 
       res = _detect(x, period, max_anoms, alpha, direction, verbose)
       res.map! { |i| sorted[i][0] } if series.is_a?(Hash)
