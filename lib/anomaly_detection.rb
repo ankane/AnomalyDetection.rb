@@ -79,13 +79,32 @@ module AnomalyDetection
 
       times = series.keys.map(&:to_time)
 
-      day = times.all? { |t| t.hour == 0 && t.min == 0 && t.sec == 0 && t.nsec == 0 }
+      second = times.all? { |t| t.nsec == 0 }
+      minute = second && times.all? { |t| t.sec == 0 }
+      hour = minute && times.all? { |t| t.min == 0 }
+      day = hour && times.all? { |t| t.hour == 0 }
+      week = day && times.map { |k| k.wday }.uniq.size == 1
+      month = day && times.all? { |k| k.day == 1 }
+      quarter = month && times.all? { |k| k.month % 3 == 1 }
+      year = quarter && times.all? { |k| k.month == 1 }
 
       period =
-        if day
-          7
-        else
+        if year
           1
+        elsif quarter
+          4
+        elsif month
+          12
+        elsif week
+          52
+        elsif day
+          7
+        elsif hour
+          24 # or 24 * 7
+        elsif minute
+          60 # or 60 * 24
+        elsif second
+          60 # or 60 * 60
         end
 
       if series.size < period * 2
