@@ -2,9 +2,8 @@ require_relative "test_helper"
 
 class AnomalyDetectionTest < Minitest::Test
   def test_hash
-    today = Date.today
-    series = self.series.map.with_index.to_h { |v, i| [today + i, v] }
-    assert_equal [9, 15, 26].map { |i| today + i }, AnomalyDetection.detect(series, period: 7, max_anoms: 0.2)
+    series = time_series
+    assert_equal [9, 15, 26].map { |i| series.keys[0] + i }, AnomalyDetection.detect(series, period: 7, max_anoms: 0.2)
   end
 
   def test_array
@@ -68,5 +67,10 @@ class AnomalyDetectionTest < Minitest::Test
       7.0, 8.0, 8.0, 0.0, 2.0, -5.0, 0.0, 5.0, 6.0, 7.0,
       3.0, 6.0, 1.0, 4.0, 4.0, 4.0, 30.0, 7.0, 5.0, 8.0
     ]
+  end
+
+  def time_series
+    today = Date.today
+    self.series.map.with_index.to_h { |v, i| [today + i, v] }
   end
 end
