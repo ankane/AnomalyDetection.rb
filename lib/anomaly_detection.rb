@@ -23,7 +23,7 @@ module AnomalyDetection
         x = series
       end
 
-      # std::endl flushes C++ output, so flush Ruby output
+      # flush Ruby output since std::endl flushes C++ output
       $stdout.flush if verbose
 
       res = _detect(x, period, max_anoms, alpha, direction, verbose)
