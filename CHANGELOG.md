@@ -1,7 +1,7 @@
 ## 0.1.5 (unreleased)
 
 - Added experimental support for auto-detecting period
-- Fixed calculation when no seasonality (period is less than 2)
+- Fixed result when no seasonality (period is less than 2)
 
 ## 0.1.4 (2022-03-19)
 
