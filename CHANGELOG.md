@@ -1,4 +1,4 @@
-## 0.2.0 (unreleased)
+## 0.2.0 (2023-01-31)
 
 - Added experimental support for auto-detecting period
 - Fixed result when no seasonality (period is less than 2)
