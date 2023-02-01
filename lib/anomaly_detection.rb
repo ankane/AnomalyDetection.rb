@@ -1,8 +1,8 @@
 # extensions
-require "anomaly_detection/ext"
+require_relative "anomaly_detection/ext"
 
 # modules
-require "anomaly_detection/version"
+require_relative "anomaly_detection/version"
 
 module AnomalyDetection
   class << self
