@@ -1,7 +1,8 @@
-## 0.1.5 (unreleased)
+## 0.2.0 (unreleased)
 
 - Added experimental support for auto-detecting period
 - Fixed result when no seasonality (period is less than 2)
+- Dropped support for Ruby < 2.7
 
 ## 0.1.4 (2022-03-19)
 
