@@ -69,17 +69,7 @@ module AnomalyDetection
         .config(axis: {title: nil, labelFontSize: 12})
     end
 
-    private
-
-    def iso8601(v)
-      if v.is_a?(Date)
-        v.strftime("%Y-%m-%d")
-      else
-        v.strftime("%Y-%m-%dT%H:%M:%S.%L%z")
-      end
-    end
-
-    # determine period based on time keys
+    # determine period based on time keys (experimental)
     # in future, could use an approach that looks at values
     # like https://stats.stackexchange.com/a/1214
     def determine_period(series)
@@ -102,6 +92,16 @@ module AnomalyDetection
         1
       else
         period
+      end
+    end
+
+    private
+
+    def iso8601(v)
+      if v.is_a?(Date)
+        v.strftime("%Y-%m-%d")
+      else
+        v.strftime("%Y-%m-%dT%H:%M:%S.%L%z")
       end
     end
   end
