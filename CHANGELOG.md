@@ -1,3 +1,7 @@
+## 0.2.1 (unreleased)
+
+- Fixed error on Fedora
+
 ## 0.2.0 (2023-01-31)
 
 - Added experimental support for auto-detecting period

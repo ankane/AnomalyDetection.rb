@@ -1,5 +1,5 @@
-# extensions
-require_relative "anomaly_detection/ext"
+# ext
+require "anomaly_detection/ext"
 
 # modules
 require_relative "anomaly_detection/version"
