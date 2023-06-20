@@ -1,5 +1,5 @@
 /*!
- * STL C++ v0.1.2
+ * STL C++ v0.1.3
  * https://github.com/ankane/stl-cpp
  * Unlicense OR MIT License
  *
@@ -151,11 +151,11 @@ void ess(const float* y, size_t n, size_t len, int ideg, size_t njump, bool user
             auto ok = est(y, n, len, ideg, (float) n, &ys[n - 1], nleft, nright, res, userw, rw);
             if (!ok) {
                 ys[n - 1] = y[n - 1];
-                if (k != n - 1) {
-                    auto delta = (ys[n - 1] - ys[k - 1]) / ((float) (n - k));
-                    for (auto j = k + 1; j <= n - 1; j++) {
-                        ys[j - 1] = ys[k - 1] + delta * ((float) (j - k));
-                    }
+            }
+            if (k != n - 1) {
+                auto delta = (ys[n - 1] - ys[k - 1]) / ((float) (n - k));
+                for (auto j = k + 1; j <= n - 1; j++) {
+                    ys[j - 1] = ys[k - 1] + delta * ((float) (j - k));
                 }
             }
         }

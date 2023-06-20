@@ -1,3 +1,7 @@
+## 0.2.2 (unreleased)
+
+- Fixed bug with STL
+
 ## 0.2.1 (2023-05-11)
 
 - Fixed error on Fedora
