@@ -1,4 +1,4 @@
-## 0.2.2 (unreleased)
+## 0.2.2 (2023-06-20)
 
 - Fixed bug with STL
 
