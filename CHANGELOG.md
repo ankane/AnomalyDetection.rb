@@ -1,3 +1,7 @@
+## 0.3.0 (2024-10-22)
+
+- Dropped support for Ruby < 3.1
+
 ## 0.2.2 (2023-06-20)
 
 - Fixed bug with STL
