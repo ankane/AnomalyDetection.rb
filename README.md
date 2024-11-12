@@ -20,9 +20,9 @@ Detect anomalies in a time series
 
 ```ruby
 series = {
-  Date.parse("2020-01-01") => 100,
-  Date.parse("2020-01-02") => 150,
-  Date.parse("2020-01-03") => 136,
+  Date.parse("2025-01-01") => 100,
+  Date.parse("2025-01-02") => 150,
+  Date.parse("2025-01-03") => 136,
   # ...
 }
 
