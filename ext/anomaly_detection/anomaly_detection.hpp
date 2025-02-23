@@ -1,5 +1,5 @@
 /*!
- * AnomalyDetection.cpp v0.1.3
+ * AnomalyDetection.cpp v0.2.0
  * https://github.com/ankane/AnomalyDetection.cpp
  * GPL-3.0-or-later License
  */
@@ -12,19 +12,33 @@
 #include <numeric>
 #include <vector>
 
+#if __cplusplus >= 202002L
+#include <span>
+#endif
+
 #include "dist.h"
 #include "stl.hpp"
 
 namespace anomaly_detection {
 
-enum Direction { Positive, Negative, Both };
+/// The direction to detect anomalies.
+enum class Direction {
+    /// Positive direction.
+    Positive,
+    /// Negative direction.
+    Negative,
+    /// Both directions.
+    Both
+};
+
+namespace {
 
 float median_sorted(const std::vector<float>& sorted) {
     return (sorted[(sorted.size() - 1) / 2] + sorted[sorted.size() / 2]) / 2.0;
 }
 
-float median(const std::vector<float>& data) {
-    std::vector<float> sorted(data);
+float median(const float* data, size_t data_size) {
+    std::vector<float> sorted(data, data + data_size);
     std::sort(sorted.begin(), sorted.end());
     return median_sorted(sorted);
 }
@@ -39,8 +53,8 @@ float mad(const std::vector<float>& data, float med) {
     return 1.4826 * median_sorted(res);
 }
 
-std::vector<size_t> detect_anoms(const std::vector<float>& data, size_t num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> callback) {
-    auto n = data.size();
+std::vector<size_t> detect_anoms(const float* data, size_t data_size, size_t num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> callback) {
+    auto n = data_size;
 
     // Check to make sure we have at least two periods worth of data for anomaly context
     if (n < num_obs_per_period * 2) {
@@ -48,18 +62,20 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, size_t num_obs_
     }
 
     // Handle NANs
-    auto nan = std::count_if(data.begin(), data.end(), [](const auto& value) { return std::isnan(value); });
+    auto nan = std::count_if(data, data + data_size, [](const auto& value) {
+        return std::isnan(value);
+    });
     if (nan > 0) {
         throw std::invalid_argument("series contains NANs");
     }
 
     std::vector<float> data2;
     data2.reserve(n);
-    auto med = median(data);
+    auto med = median(data, data_size);
 
     if (num_obs_per_period > 1) {
         // Decompose data. This returns a univarite remainder which will be used for anomaly detection. Optionally, we might NOT decompose.
-        auto data_decomp = stl::params().robust(true).seasonal_length(data.size() * 10 + 1).fit(data, num_obs_per_period);
+        auto data_decomp = stl::params().robust(true).seasonal_length(data_size * 10 + 1).fit(data, data_size, num_obs_per_period);
         auto seasonal = data_decomp.seasonal;
 
         for (size_t i = 0; i < n; i++) {
@@ -80,7 +96,9 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, size_t num_obs_
     // Use stable sort for indexes for deterministic results
     std::vector<size_t> indexes(n);
     std::iota(indexes.begin(), indexes.end(), 0);
-    std::stable_sort(indexes.begin(), indexes.end(), [&data2](size_t a, size_t b) { return data2[a] < data2[b]; });
+    std::stable_sort(indexes.begin(), indexes.end(), [&data2](size_t a, size_t b) {
+        return data2[a] < data2[b];
+    });
     std::sort(data2.begin(), data2.end());
 
     // Compute test statistic until r=max_outliers values have been removed from the sample
@@ -153,11 +171,16 @@ std::vector<size_t> detect_anoms(const std::vector<float>& data, size_t num_obs_
     return anomalies;
 }
 
+}
+
+/// An anomaly detection result.
 class AnomalyDetectionResult {
 public:
+    /// Returns the anomalies.
     std::vector<size_t> anomalies;
 };
 
+/// A set of anomaly detection parameters.
 class AnomalyDetectionParams {
     float alpha_ = 0.05;
     float max_anoms_ = 0.1;
@@ -166,45 +189,61 @@ class AnomalyDetectionParams {
     std::function<void()> callback_ = nullptr;
 
 public:
+    /// Sets the level of statistical significance.
     inline AnomalyDetectionParams alpha(float alpha) {
         this->alpha_ = alpha;
         return *this;
     };
 
+    /// Sets the maximum number of anomalies as percent of data.
     inline AnomalyDetectionParams max_anoms(float max_anoms) {
         this->max_anoms_ = max_anoms;
         return *this;
     };
 
+    /// Sets the direction.
     inline AnomalyDetectionParams direction(Direction direction) {
         this->direction_ = direction;
         return *this;
     };
 
+    /// Sets whether to show progress.
     inline AnomalyDetectionParams verbose(bool verbose) {
         this->verbose_ = verbose;
         return *this;
     };
 
+    /// Sets a callback for each iteration.
     inline AnomalyDetectionParams callback(std::function<void()> callback) {
         this->callback_ = callback;
         return *this;
     };
 
-    AnomalyDetectionResult fit(const std::vector<float>& series, size_t period);
+    /// Detects anomalies in a time series from an array.
+    inline AnomalyDetectionResult fit(const float* series, size_t series_size, size_t period) const {
+        bool one_tail = this->direction_ != Direction::Both;
+        bool upper_tail = this->direction_ == Direction::Positive;
+
+        auto anomalies = detect_anoms(series, series_size, period, this->max_anoms_, this->alpha_, one_tail, upper_tail, this->verbose_, this->callback_);
+        return AnomalyDetectionResult { anomalies };
+    }
+
+    /// Detects anomalies in a time series from a vector.
+    inline AnomalyDetectionResult fit(const std::vector<float>& series, size_t period) const {
+        return fit(series.data(), series.size(), period);
+    }
+
+#if __cplusplus >= 202002L
+    /// Detects anomalies in a time series from a span.
+    inline AnomalyDetectionResult fit(std::span<const float> series, size_t period) const {
+        return fit(series.data(), series.size(), period);
+    }
+#endif
 };
 
-AnomalyDetectionParams params() {
+/// Creates a new set of parameters.
+inline AnomalyDetectionParams params() {
     return AnomalyDetectionParams();
-}
-
-AnomalyDetectionResult AnomalyDetectionParams::fit(const std::vector<float>& series, size_t period) {
-    bool one_tail = this->direction_ != Direction::Both;
-    bool upper_tail = this->direction_ == Direction::Positive;
-
-    auto res = AnomalyDetectionResult();
-    res.anomalies = detect_anoms(series, period, this->max_anoms_, this->alpha_, one_tail, upper_tail, this->verbose_, this->callback_);
-    return res;
 }
 
 }
