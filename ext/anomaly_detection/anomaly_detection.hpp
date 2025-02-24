@@ -1,5 +1,5 @@
 /*!
- * AnomalyDetection.cpp v0.2.0
+ * AnomalyDetection.cpp v0.2.1
  * https://github.com/ankane/AnomalyDetection.cpp
  * GPL-3.0-or-later License
  */
@@ -33,27 +33,31 @@ enum class Direction {
 
 namespace {
 
-float median_sorted(const std::vector<float>& sorted) {
+template<typename T>
+T median_sorted(const std::vector<T>& sorted) {
     return (sorted[(sorted.size() - 1) / 2] + sorted[sorted.size() / 2]) / 2.0;
 }
 
-float median(const float* data, size_t data_size) {
-    std::vector<float> sorted(data, data + data_size);
+template<typename T>
+T median(const T* data, size_t data_size) {
+    std::vector<T> sorted(data, data + data_size);
     std::sort(sorted.begin(), sorted.end());
     return median_sorted(sorted);
 }
 
-float mad(const std::vector<float>& data, float med) {
-    std::vector<float> res;
+template<typename T>
+T mad(const std::vector<T>& data, T med) {
+    std::vector<T> res;
     res.reserve(data.size());
     for (auto v : data) {
-        res.push_back(fabs(v - med));
+        res.push_back(std::abs(v - med));
     }
     std::sort(res.begin(), res.end());
     return 1.4826 * median_sorted(res);
 }
 
-std::vector<size_t> detect_anoms(const float* data, size_t data_size, size_t num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> callback) {
+template<typename T>
+std::vector<size_t> detect_anoms(const T* data, size_t data_size, size_t num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> callback) {
     auto n = data_size;
 
     // Check to make sure we have at least two periods worth of data for anomaly context
@@ -69,7 +73,7 @@ std::vector<size_t> detect_anoms(const float* data, size_t data_size, size_t num
         throw std::invalid_argument("series contains NANs");
     }
 
-    std::vector<float> data2;
+    std::vector<T> data2;
     data2.reserve(n);
     auto med = median(data, data_size);
 
@@ -109,7 +113,7 @@ std::vector<size_t> detect_anoms(const float* data, size_t data_size, size_t num
 
         // TODO Improve performance between loop iterations
         auto ma = median_sorted(data2);
-        std::vector<float> ares;
+        std::vector<T> ares;
         ares.reserve(data2.size());
         if (one_tail) {
             if (upper_tail) {
@@ -123,7 +127,7 @@ std::vector<size_t> detect_anoms(const float* data, size_t data_size, size_t num
             }
         } else {
             for (auto v : data2) {
-                ares.push_back(fabs(v - ma));
+                ares.push_back(std::abs(v - ma));
             }
         }
 
@@ -144,7 +148,7 @@ std::vector<size_t> detect_anoms(const float* data, size_t data_size, size_t num
         indexes.erase(indexes.begin() + r_idx_i);
 
         // Compute critical value
-        float p;
+        double p;
         if (one_tail) {
             p = 1.0 - alpha / (n - i + 1);
         } else {
@@ -152,7 +156,7 @@ std::vector<size_t> detect_anoms(const float* data, size_t data_size, size_t num
         }
 
         auto t = students_t_ppf(p, n - i - 1);
-        auto lam = t * (n - i) / sqrt(((n - i - 1) + t * t) * (n - i + 1));
+        auto lam = t * (n - i) / std::sqrt(((n - i - 1) + t * t) * (n - i + 1));
 
         if (r > lam) {
             num_anoms = i;
@@ -220,7 +224,8 @@ public:
     };
 
     /// Detects anomalies in a time series from an array.
-    inline AnomalyDetectionResult fit(const float* series, size_t series_size, size_t period) const {
+    template<typename T>
+    inline AnomalyDetectionResult fit(const T* series, size_t series_size, size_t period) const {
         bool one_tail = this->direction_ != Direction::Both;
         bool upper_tail = this->direction_ == Direction::Positive;
 
@@ -229,13 +234,15 @@ public:
     }
 
     /// Detects anomalies in a time series from a vector.
-    inline AnomalyDetectionResult fit(const std::vector<float>& series, size_t period) const {
+    template<typename T>
+    inline AnomalyDetectionResult fit(const std::vector<T>& series, size_t period) const {
         return fit(series.data(), series.size(), period);
     }
 
 #if __cplusplus >= 202002L
     /// Detects anomalies in a time series from a span.
-    inline AnomalyDetectionResult fit(std::span<const float> series, size_t period) const {
+    template<typename T>
+    inline AnomalyDetectionResult fit(std::span<const T> series, size_t period) const {
         return fit(series.data(), series.size(), period);
     }
 #endif
