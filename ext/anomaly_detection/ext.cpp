@@ -37,7 +37,7 @@ void Init_ext() {
 
         auto a = Rice::Array();
         for (auto v : res.anomalies) {
-          a.push(v);
+          a.push(v, false);
         }
         return a;
       });
