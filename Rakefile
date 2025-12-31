@@ -14,8 +14,9 @@ Rake::ExtensionTask.new("anomaly_detection") do |ext|
 end
 
 task :remove_ext do
-  path = "lib/anomaly_detection/ext.bundle"
-  File.unlink(path) if File.exist?(path)
+  Dir["lib/anomaly_detection/ext.{bundle,so}"].each do |path|
+    File.unlink(path)
+  end
 end
 
 Rake::Task["build"].enhance [:remove_ext]
