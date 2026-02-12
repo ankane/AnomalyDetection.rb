@@ -6,3 +6,4 @@ gem "rake"
 gem "rake-compiler"
 gem "minitest"
 gem "vega"
+gem "ruby_memcheck", require: false
