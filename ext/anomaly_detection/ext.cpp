@@ -16,7 +16,7 @@ void Init_ext() {
   rb_mAnomalyDetection
     .define_singleton_function(
       "_detect",
-      [](std::vector<float> series, int period, float k, float alpha, const std::string& direction, bool verbose) {
+      [](const std::vector<float>& series, int period, float k, float alpha, const std::string& direction, bool verbose) {
         Direction dir;
         if (direction == "pos") {
           dir = Direction::Positive;
