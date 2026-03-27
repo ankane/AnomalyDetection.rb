@@ -8,6 +8,7 @@
 
 #include "anomaly_detection.hpp"
 
+using anomaly_detection::AnomalyDetectionResult;
 using anomaly_detection::Direction;
 
 extern "C"
@@ -29,7 +30,7 @@ void Init_ext() {
           throw std::invalid_argument("direction must be pos, neg, or both");
         }
 
-        auto res = anomaly_detection::params()
+        AnomalyDetectionResult res = anomaly_detection::params()
           .max_anoms(k)
           .alpha(alpha)
           .direction(dir)
