@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -16,7 +17,7 @@ void Init_ext() {
   rb_mAnomalyDetection
     .define_singleton_function(
       "_detect",
-      [](const std::vector<float>& series, int period, float k, float alpha, const std::string& direction, bool verbose) {
+      [](const std::vector<float>& series, size_t period, float k, float alpha, const std::string& direction, bool verbose) {
         Direction dir;
         if (direction == "pos") {
           dir = Direction::Positive;
@@ -36,7 +37,7 @@ void Init_ext() {
           .callback(rb_thread_check_ints)
           .fit(series, period);
 
-        auto a = Rice::Array();
+        Rice::Array a;
         for (auto v : res.anomalies) {
           a.push(v, false);
         }
