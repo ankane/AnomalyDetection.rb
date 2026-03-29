@@ -1,5 +1,6 @@
 ## 0.4.0 (unreleased)
 
+- Updated AnomalyDetection.cpp to 0.3.0
 - Dropped support for Ruby < 3.3
 
 ## 0.3.1 (2025-10-26)

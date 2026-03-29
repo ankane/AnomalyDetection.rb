@@ -1,20 +1,22 @@
-/*!
- * AnomalyDetection.cpp v0.2.1
+/*
+ * AnomalyDetection.cpp v0.3.0
  * https://github.com/ankane/AnomalyDetection.cpp
  * GPL-3.0-or-later License
  */
 
 #pragma once
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <vector>
-
-#if __cplusplus >= 202002L
 #include <span>
-#endif
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 #include "dist.h"
 #include "stl.hpp"
@@ -31,17 +33,18 @@ enum class Direction {
     Both
 };
 
-namespace {
+namespace detail {
 
 template<typename T>
 T median_sorted(const std::vector<T>& sorted) {
-    return (sorted[(sorted.size() - 1) / 2] + sorted[sorted.size() / 2]) / 2.0;
+    return (sorted.at((sorted.size() - 1) / 2) + sorted.at(sorted.size() / 2))
+        / static_cast<T>(2.0);
 }
 
 template<typename T>
-T median(const T* data, size_t data_size) {
-    std::vector<T> sorted(data, data + data_size);
-    std::sort(sorted.begin(), sorted.end());
+T median(std::span<const T> data) {
+    std::vector<T> sorted(data.begin(), data.end());
+    std::ranges::sort(sorted);
     return median_sorted(sorted);
 }
 
@@ -52,47 +55,75 @@ T mad(const std::vector<T>& data, T med) {
     for (auto v : data) {
         res.push_back(std::abs(v - med));
     }
-    std::sort(res.begin(), res.end());
-    return 1.4826 * median_sorted(res);
+    std::ranges::sort(res);
+    return static_cast<T>(1.4826) * median_sorted(res);
 }
 
 template<typename T>
-std::vector<size_t> detect_anoms(const T* data, size_t data_size, size_t num_obs_per_period, float k, float alpha, bool one_tail, bool upper_tail, bool verbose, std::function<void()> callback) {
-    auto n = data_size;
+std::vector<size_t> detect_anoms(
+    std::span<const T> data,
+    size_t num_obs_per_period,
+    float k,
+    float alpha,
+    bool one_tail,
+    bool upper_tail,
+    bool verbose,
+    const std::function<void()>& callback
+) {
+    size_t n = data.size();
 
     // Check to make sure we have at least two periods worth of data for anomaly context
-    if (n < num_obs_per_period * 2) {
-        throw std::invalid_argument("series must contain at least 2 periods");
+    if (n / 2 < num_obs_per_period) {
+        throw std::invalid_argument{"series must contain at least 2 periods"};
     }
 
     // Handle NANs
-    auto nan = std::count_if(data, data + data_size, [](const auto& value) {
-        return std::isnan(value);
-    });
-    if (nan > 0) {
-        throw std::invalid_argument("series contains NANs");
+    bool nans = std::ranges::any_of(data, [](const auto& value) { return std::isnan(value); });
+    if (nans) {
+        throw std::invalid_argument{"series contains NANs"};
+    }
+
+    if (k < 0) {
+        throw std::invalid_argument{"max_anoms must be non-negative"};
+    }
+
+    if (k >= 0.5) {
+        throw std::invalid_argument{"max_anoms must be less than 50% of the data points"};
+    }
+
+    if (alpha < 0) {
+        throw std::invalid_argument{"alpha must be non-negative"};
+    }
+
+    if (alpha > 0.5) {
+        throw std::invalid_argument{"alpha must not be greater than 0.5"};
     }
 
     std::vector<T> data2;
     data2.reserve(n);
-    auto med = median(data, data_size);
+    T med = median(data);
 
     if (num_obs_per_period > 1) {
         // Decompose data. This returns a univarite remainder which will be used for anomaly detection. Optionally, we might NOT decompose.
-        auto data_decomp = stl::params().robust(true).seasonal_length(data_size * 10 + 1).fit(data, data_size, num_obs_per_period);
-        auto seasonal = data_decomp.seasonal;
+        stl::Stl data_decomp{
+            data, num_obs_per_period, {.seasonal_length = data.size() * 10 + 1, .robust = true}
+        };
+        const std::vector<T>& seasonal = data_decomp.seasonal();
 
-        for (size_t i = 0; i < n; i++) {
-            data2.push_back(data[i] - seasonal[i] - med);
+        // TODO use std::views::zip for C++23
+        size_t i = 0;
+        for (auto v : data) {
+            data2.push_back(v - seasonal.at(i) - med);
+            i++;
         }
     } else {
-        for (size_t i = 0; i < n; i++) {
-            data2.push_back(data[i] - med);
+        for (auto v : data) {
+            data2.push_back(v - med);
         }
     }
 
-    auto num_anoms = 0;
-    auto max_outliers = (size_t) n * k;
+    size_t num_anoms = 0;
+    auto max_outliers = static_cast<size_t>(static_cast<float>(n) * k);
     std::vector<size_t> anomalies;
     anomalies.reserve(max_outliers);
 
@@ -100,19 +131,19 @@ std::vector<size_t> detect_anoms(const T* data, size_t data_size, size_t num_obs
     // Use stable sort for indexes for deterministic results
     std::vector<size_t> indexes(n);
     std::iota(indexes.begin(), indexes.end(), 0);
-    std::stable_sort(indexes.begin(), indexes.end(), [&data2](size_t a, size_t b) {
-        return data2[a] < data2[b];
+    std::ranges::stable_sort(indexes, [&data2](size_t a, size_t b) {
+        return data2.at(a) < data2.at(b);
     });
-    std::sort(data2.begin(), data2.end());
+    std::ranges::sort(data2);
 
     // Compute test statistic until r=max_outliers values have been removed from the sample
-    for (auto i = 1; i <= max_outliers; i++) {
+    for (size_t i = 1; i <= max_outliers; i++) {
         if (verbose) {
             std::cout << i << " / " << max_outliers << " completed" << std::endl;
         }
 
         // TODO Improve performance between loop iterations
-        auto ma = median_sorted(data2);
+        T ma = median_sorted(data2);
         std::vector<T> ares;
         ares.reserve(data2.size());
         if (one_tail) {
@@ -132,31 +163,29 @@ std::vector<size_t> detect_anoms(const T* data, size_t data_size, size_t num_obs
         }
 
         // Protect against constant time series
-        auto data_sigma = mad(data2, ma);
+        T data_sigma = mad(data2, ma);
         if (data_sigma == 0.0) {
             break;
         }
 
-        auto iter = std::max_element(ares.begin(), ares.end());
-        auto r_idx_i = std::distance(ares.begin(), iter);
+        auto iter = std::ranges::max_element(ares);
+        ptrdiff_t r_idx_i = std::distance(ares.begin(), iter);
 
         // Only need to take sigma of r for performance
-        auto r = ares[r_idx_i] / data_sigma;
+        T r = ares.at(static_cast<size_t>(r_idx_i)) / data_sigma;
 
-        anomalies.push_back(indexes[r_idx_i]);
+        anomalies.push_back(indexes.at(static_cast<size_t>(r_idx_i)));
         data2.erase(data2.begin() + r_idx_i);
         indexes.erase(indexes.begin() + r_idx_i);
 
         // Compute critical value
-        double p;
-        if (one_tail) {
-            p = 1.0 - alpha / (n - i + 1);
-        } else {
-            p = 1.0 - alpha / (2.0 * (n - i + 1));
-        }
+        double p = one_tail
+            ? (1.0 - alpha / static_cast<double>(n - i + 1))
+            : (1.0 - alpha / (2.0 * static_cast<double>(n - i + 1)));
 
-        auto t = students_t_ppf(p, n - i - 1);
-        auto lam = t * (n - i) / std::sqrt(((n - i - 1) + t * t) * (n - i + 1));
+        double t = students_t_ppf(p, static_cast<double>(n - i - 1));
+        double lam = t * static_cast<double>(n - i)
+            / std::sqrt((static_cast<double>(n - i - 1) + t * t) * static_cast<double>(n - i + 1));
 
         if (r > lam) {
             num_anoms = i;
@@ -170,87 +199,69 @@ std::vector<size_t> detect_anoms(const T* data, size_t data_size, size_t num_obs
     anomalies.resize(num_anoms);
 
     // Sort like R version
-    std::sort(anomalies.begin(), anomalies.end());
+    std::ranges::sort(anomalies);
 
     return anomalies;
 }
 
-}
-
-/// An anomaly detection result.
-class AnomalyDetectionResult {
-public:
-    /// Returns the anomalies.
-    std::vector<size_t> anomalies;
-};
+} // namespace detail
 
 /// A set of anomaly detection parameters.
-class AnomalyDetectionParams {
-    float alpha_ = 0.05;
-    float max_anoms_ = 0.1;
-    Direction direction_ = Direction::Both;
-    bool verbose_ = false;
-    std::function<void()> callback_ = nullptr;
-
-public:
+struct AnomalyDetectionParams {
     /// Sets the level of statistical significance.
-    inline AnomalyDetectionParams alpha(float alpha) {
-        this->alpha_ = alpha;
-        return *this;
-    };
-
+    float alpha = 0.05f;
     /// Sets the maximum number of anomalies as percent of data.
-    inline AnomalyDetectionParams max_anoms(float max_anoms) {
-        this->max_anoms_ = max_anoms;
-        return *this;
-    };
-
+    float max_anoms = 0.1f;
     /// Sets the direction.
-    inline AnomalyDetectionParams direction(Direction direction) {
-        this->direction_ = direction;
-        return *this;
-    };
-
+    Direction direction = Direction::Both;
     /// Sets whether to show progress.
-    inline AnomalyDetectionParams verbose(bool verbose) {
-        this->verbose_ = verbose;
-        return *this;
-    };
-
+    bool verbose = false;
     /// Sets a callback for each iteration.
-    inline AnomalyDetectionParams callback(std::function<void()> callback) {
-        this->callback_ = callback;
-        return *this;
-    };
+    std::function<void()> callback = nullptr;
+};
 
-    /// Detects anomalies in a time series from an array.
+/// An anomaly detection result.
+class AnomalyDetection {
+  public:
+    /// Detects anomalies in a time series from a span.
     template<typename T>
-    inline AnomalyDetectionResult fit(const T* series, size_t series_size, size_t period) const {
-        bool one_tail = this->direction_ != Direction::Both;
-        bool upper_tail = this->direction_ == Direction::Positive;
+    AnomalyDetection(
+        std::span<const T> series,
+        size_t period,
+        const AnomalyDetectionParams& params = AnomalyDetectionParams()
+    ) {
+        bool one_tail = params.direction != Direction::Both;
+        bool upper_tail = params.direction == Direction::Positive;
 
-        auto anomalies = detect_anoms(series, series_size, period, this->max_anoms_, this->alpha_, one_tail, upper_tail, this->verbose_, this->callback_);
-        return AnomalyDetectionResult { anomalies };
+        std::vector<size_t> anomalies = detail::detect_anoms(
+            series,
+            period,
+            params.max_anoms,
+            params.alpha,
+            one_tail,
+            upper_tail,
+            params.verbose,
+            params.callback
+        );
+        anomalies_ = std::move(anomalies);
     }
 
     /// Detects anomalies in a time series from a vector.
     template<typename T>
-    inline AnomalyDetectionResult fit(const std::vector<T>& series, size_t period) const {
-        return fit(series.data(), series.size(), period);
+    AnomalyDetection(
+        const std::vector<T>& series,
+        size_t period,
+        const AnomalyDetectionParams& params = AnomalyDetectionParams()
+    ) :
+        AnomalyDetection(std::span<const T>{series}, period, params) {}
+
+    /// Returns the anomalies.
+    const std::vector<size_t>& anomalies() const {
+        return anomalies_;
     }
 
-#if __cplusplus >= 202002L
-    /// Detects anomalies in a time series from a span.
-    template<typename T>
-    inline AnomalyDetectionResult fit(std::span<const T> series, size_t period) const {
-        return fit(series.data(), series.size(), period);
-    }
-#endif
+  private:
+    std::vector<size_t> anomalies_;
 };
 
-/// Creates a new set of parameters.
-inline AnomalyDetectionParams params() {
-    return AnomalyDetectionParams();
-}
-
-}
+} // namespace anomaly_detection

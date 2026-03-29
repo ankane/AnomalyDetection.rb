@@ -8,7 +8,8 @@
 
 #include "anomaly_detection.hpp"
 
-using anomaly_detection::AnomalyDetectionResult;
+using anomaly_detection::AnomalyDetection;
+using anomaly_detection::AnomalyDetectionParams;
 using anomaly_detection::Direction;
 
 extern "C"
@@ -30,16 +31,17 @@ void Init_ext() {
           throw std::invalid_argument("direction must be pos, neg, or both");
         }
 
-        AnomalyDetectionResult res = anomaly_detection::params()
-          .max_anoms(k)
-          .alpha(alpha)
-          .direction(dir)
-          .verbose(verbose)
-          .callback(rb_thread_check_ints)
-          .fit(series, period);
+        AnomalyDetectionParams params{
+          .alpha = alpha,
+          .max_anoms = k,
+          .direction = dir,
+          .verbose = verbose,
+          .callback = rb_thread_check_ints
+        };
+        AnomalyDetection res{series, period, params};
 
         Rice::Array a;
-        for (auto v : res.anomalies) {
+        for (auto v : res.anomalies()) {
           a.push(v, false);
         }
         return a;
