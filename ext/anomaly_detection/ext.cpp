@@ -4,7 +4,6 @@
 #include <vector>
 
 #include <rice/rice.hpp>
-#include <rice/stl.hpp>
 
 #include "anomaly_detection.hpp"
 
@@ -19,7 +18,10 @@ void Init_ext() {
   rb_mAnomalyDetection
     .define_singleton_function(
       "_detect",
-      [](const std::vector<float>& series, size_t period, float k, float alpha, const std::string& direction, bool verbose) {
+      [](Rice::Array rb_series, size_t period, float k, float alpha, Rice::String rb_direction, bool verbose) {
+        std::vector<float> series = rb_series.to_vector<float>();
+        std::string direction = rb_direction.str();
+
         Direction dir;
         if (direction == "pos") {
           dir = Direction::Positive;
