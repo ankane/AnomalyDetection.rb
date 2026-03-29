@@ -13,7 +13,7 @@ using anomaly_detection::Direction;
 
 extern "C"
 void Init_ext() {
-  auto rb_mAnomalyDetection = Rice::define_module("AnomalyDetection");
+  Rice::Module rb_mAnomalyDetection = Rice::define_module("AnomalyDetection");
 
   rb_mAnomalyDetection
     .define_singleton_function(
@@ -43,7 +43,7 @@ void Init_ext() {
         AnomalyDetection res{series, period, params};
 
         Rice::Array a;
-        for (auto v : res.anomalies()) {
+        for (const auto v : res.anomalies()) {
           a.push(v, false);
         }
         return a;
